@@ -1,0 +1,309 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.jewelbook_bapa"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+8-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml
+9        android:targetSdkVersion="34" />
+9-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:3:5-67
+11-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:3:22-64
+12    <uses-permission android:name="android.permission.CAMERA" />
+12-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:4:5-64
+12-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:4:22-62
+13    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+13-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:5:5-82
+13-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:5:22-79
+14    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+14-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:6:5-80
+14-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:6:22-77
+15    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+15-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:7:5-81
+15-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:7:22-78
+16
+17    <!-- Required to query activities that can process text, see: https://developer.android.com/training/package-visibility?hl=en and https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT. -->
+18    <queries>
+18-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:53:5-58:15
+19        <intent>
+19-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:54:9-57:18
+20            <action android:name="android.intent.action.PROCESS_TEXT" />
+20-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:55:13-73
+20-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:55:21-70
+21
+22            <data android:mimeType="text/plain" />
+22-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:56:13-51
+22-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:56:19-48
+23        </intent>
+24    </queries>
+25
+26    <permission
+26-->[androidx.core:core:1.13.1] C:\Users\vivek\.gradle\caches\transforms-3\d3942c70e5e60df242aa11912d9460df\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+27        android:name="com.example.jewelbook_bapa.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+27-->[androidx.core:core:1.13.1] C:\Users\vivek\.gradle\caches\transforms-3\d3942c70e5e60df242aa11912d9460df\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+28        android:protectionLevel="signature" />
+28-->[androidx.core:core:1.13.1] C:\Users\vivek\.gradle\caches\transforms-3\d3942c70e5e60df242aa11912d9460df\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+29
+30    <uses-permission android:name="com.example.jewelbook_bapa.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+30-->[androidx.core:core:1.13.1] C:\Users\vivek\.gradle\caches\transforms-3\d3942c70e5e60df242aa11912d9460df\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+30-->[androidx.core:core:1.13.1] C:\Users\vivek\.gradle\caches\transforms-3\d3942c70e5e60df242aa11912d9460df\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+31    <uses-feature
+31-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:25:5-27:36
+32        android:name="android.hardware.camera"
+32-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:26:9-47
+33        android:required="false" />
+33-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:27:9-33
+34    <uses-feature
+34-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:28:5-30:36
+35        android:name="android.hardware.camera.front"
+35-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:29:9-53
+36        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+36-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:30:9-33
+37    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
+38    <uses-feature
+38-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:33:5-35:36
+39        android:name="android.hardware.camera.autofocus"
+39-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:34:9-57
+40        android:required="false" />
+40-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:35:9-33
+41    <uses-feature
+41-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:36:5-38:36
+42        android:name="android.hardware.camera.flash"
+42-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:37:9-53
+43        android:required="false" />
+43-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:38:9-33
+44    <uses-feature
+44-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:39:5-41:36
+45        android:name="android.hardware.screen.landscape"
+45-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:40:9-57
+46        android:required="false" />
+46-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:41:9-33
+47    <uses-feature
+47-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:42:5-44:36
+48        android:name="android.hardware.wifi"
+48-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:43:9-45
+49        android:required="false" />
+49-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:44:9-33
+50
+51    <application
+52        android:name="android.app.Application"
+52-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:10:9-42
+53        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+53-->[androidx.core:core:1.13.1] C:\Users\vivek\.gradle\caches\transforms-3\d3942c70e5e60df242aa11912d9460df\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+54        android:icon="@mipmap/ic_launcher"
+54-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:11:9-43
+55        android:label="Jewelbook Bapa"
+55-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:13:9-39
+56        android:requestLegacyExternalStorage="true" >
+56-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:12:9-52
+57        <activity
+57-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:15:9-33:20
+58            android:name="com.example.jewelbook_bapa.MainActivity"
+58-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:16:13-41
+59            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+59-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:17:13-163
+60            android:enableOnBackInvokedCallback="true"
+60-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:19:13-55
+61            android:exported="true"
+61-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:18:13-36
+62            android:hardwareAccelerated="true"
+62-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:20:13-47
+63            android:launchMode="singleTop"
+63-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:21:13-43
+64            android:theme="@style/LaunchTheme"
+64-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:22:13-47
+65            android:windowSoftInputMode="adjustResize" >
+65-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:23:13-55
+66            <meta-data
+66-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:25:13-27:57
+67                android:name="io.flutter.embedding.android.NormalTheme"
+67-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:26:17-72
+68                android:resource="@style/NormalTheme" />
+68-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:27:17-54
+69
+70            <intent-filter>
+70-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:29:13-32:29
+71                <action android:name="android.intent.action.MAIN" />
+71-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:30:17-69
+71-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:30:25-66
+72
+73                <category android:name="android.intent.category.LAUNCHER" />
+73-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:31:17-77
+73-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:31:27-74
+74            </intent-filter>
+75        </activity>
+76
+77        <!-- FileProvider declaration -->
+78        <provider
+78-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:36:9-44:20
+79            android:name="androidx.core.content.FileProvider"
+79-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:37:13-62
+80            android:authorities="com.example.jewelbook_bapa.fileprovider"
+80-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:38:13-74
+81            android:exported="false"
+81-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:39:13-37
+82            android:grantUriPermissions="true" >
+82-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:40:13-47
+83            <meta-data
+83-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:41:13-43:54
+84                android:name="android.support.FILE_PROVIDER_PATHS"
+84-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:42:17-67
+85                android:resource="@xml/file_paths" />
+85-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:43:17-51
+86        </provider>
+87
+88        <!-- Don't delete the meta-data below. This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+89        <meta-data
+89-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:47:9-49:33
+90            android:name="flutterEmbedding"
+90-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:48:13-44
+91            android:value="2" />
+91-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:49:13-30
+92        <!--
+93           Declares a provider which allows us to store files to share in
+94           '.../caches/share_plus' and grant the receiving action access
+95        -->
+96        <provider
+96-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:15:9-23:20
+97            android:name="dev.fluttercommunity.plus.share.ShareFileProvider"
+97-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:16:13-77
+98            android:authorities="com.example.jewelbook_bapa.flutter.share_provider"
+98-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:17:13-74
+99            android:exported="false"
+99-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:18:13-37
+100            android:grantUriPermissions="true" >
+100-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:19:13-47
+101            <meta-data
+101-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:41:13-43:54
+102                android:name="android.support.FILE_PROVIDER_PATHS"
+102-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:42:17-67
+103                android:resource="@xml/flutter_share_file_paths" />
+103-->C:\Users\vivek\bapa\android\app\src\main\AndroidManifest.xml:43:17-51
+104        </provider>
+105        <!--
+106           This manifest declared broadcast receiver allows us to use an explicit
+107           Intent when creating a PendingItent to be informed of the user's choice
+108        -->
+109        <receiver
+109-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:28:9-34:20
+110            android:name="dev.fluttercommunity.plus.share.SharePlusPendingIntent"
+110-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:29:13-82
+111            android:exported="false" >
+111-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:30:13-37
+112            <intent-filter>
+112-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:31:13-33:29
+113                <action android:name="EXTRA_CHOSEN_COMPONENT" />
+113-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:32:17-65
+113-->[:share_plus] C:\Users\vivek\bapa\build\share_plus\intermediates\merged_manifest\release\AndroidManifest.xml:32:25-62
+114            </intent-filter>
+115        </receiver>
+116
+117        <activity
+117-->[:url_launcher_android] C:\Users\vivek\bapa\build\url_launcher_android\intermediates\merged_manifest\release\AndroidManifest.xml:10:9-13:74
+118            android:name="io.flutter.plugins.urllauncher.WebViewActivity"
+118-->[:url_launcher_android] C:\Users\vivek\bapa\build\url_launcher_android\intermediates\merged_manifest\release\AndroidManifest.xml:11:13-74
+119            android:exported="false"
+119-->[:url_launcher_android] C:\Users\vivek\bapa\build\url_launcher_android\intermediates\merged_manifest\release\AndroidManifest.xml:12:13-37
+120            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+120-->[:url_launcher_android] C:\Users\vivek\bapa\build\url_launcher_android\intermediates\merged_manifest\release\AndroidManifest.xml:13:13-71
+121
+122        <uses-library
+122-->[androidx.window:window:1.2.0] C:\Users\vivek\.gradle\caches\transforms-3\ee7baf440c28ea8a95da3343d1707fda\transformed\jetified-window-1.2.0\AndroidManifest.xml:23:9-25:40
+123            android:name="androidx.window.extensions"
+123-->[androidx.window:window:1.2.0] C:\Users\vivek\.gradle\caches\transforms-3\ee7baf440c28ea8a95da3343d1707fda\transformed\jetified-window-1.2.0\AndroidManifest.xml:24:13-54
+124            android:required="false" />
+124-->[androidx.window:window:1.2.0] C:\Users\vivek\.gradle\caches\transforms-3\ee7baf440c28ea8a95da3343d1707fda\transformed\jetified-window-1.2.0\AndroidManifest.xml:25:13-37
+125        <uses-library
+125-->[androidx.window:window:1.2.0] C:\Users\vivek\.gradle\caches\transforms-3\ee7baf440c28ea8a95da3343d1707fda\transformed\jetified-window-1.2.0\AndroidManifest.xml:26:9-28:40
+126            android:name="androidx.window.sidecar"
+126-->[androidx.window:window:1.2.0] C:\Users\vivek\.gradle\caches\transforms-3\ee7baf440c28ea8a95da3343d1707fda\transformed\jetified-window-1.2.0\AndroidManifest.xml:27:13-51
+127            android:required="false" />
+127-->[androidx.window:window:1.2.0] C:\Users\vivek\.gradle\caches\transforms-3\ee7baf440c28ea8a95da3343d1707fda\transformed\jetified-window-1.2.0\AndroidManifest.xml:28:13-37
+128
+129        <provider
+129-->[androidx.emoji2:emoji2:1.0.0] C:\Users\vivek\.gradle\caches\transforms-3\096e80576ef588577a1b226518377899\transformed\jetified-emoji2-1.0.0\AndroidManifest.xml:26:9-34:20
+130            android:name="androidx.startup.InitializationProvider"
+130-->[androidx.emoji2:emoji2:1.0.0] C:\Users\vivek\.gradle\caches\transforms-3\096e80576ef588577a1b226518377899\transformed\jetified-emoji2-1.0.0\AndroidManifest.xml:27:13-67
+131            android:authorities="com.example.jewelbook_bapa.androidx-startup"
+131-->[androidx.emoji2:emoji2:1.0.0] C:\Users\vivek\.gradle\caches\transforms-3\096e80576ef588577a1b226518377899\transformed\jetified-emoji2-1.0.0\AndroidManifest.xml:28:13-68
+132            android:exported="false" >
+132-->[androidx.emoji2:emoji2:1.0.0] C:\Users\vivek\.gradle\caches\transforms-3\096e80576ef588577a1b226518377899\transformed\jetified-emoji2-1.0.0\AndroidManifest.xml:29:13-37
+133            <meta-data
+133-->[androidx.emoji2:emoji2:1.0.0] C:\Users\vivek\.gradle\caches\transforms-3\096e80576ef588577a1b226518377899\transformed\jetified-emoji2-1.0.0\AndroidManifest.xml:31:13-33:52
+134                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+134-->[androidx.emoji2:emoji2:1.0.0] C:\Users\vivek\.gradle\caches\transforms-3\096e80576ef588577a1b226518377899\transformed\jetified-emoji2-1.0.0\AndroidManifest.xml:32:17-75
+135                android:value="androidx.startup" />
+135-->[androidx.emoji2:emoji2:1.0.0] C:\Users\vivek\.gradle\caches\transforms-3\096e80576ef588577a1b226518377899\transformed\jetified-emoji2-1.0.0\AndroidManifest.xml:33:17-49
+136            <meta-data
+136-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\vivek\.gradle\caches\transforms-3\98d6d6efad33ddcfb57ba737d319c564\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+137                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+137-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\vivek\.gradle\caches\transforms-3\98d6d6efad33ddcfb57ba737d319c564\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+138                android:value="androidx.startup" />
+138-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\vivek\.gradle\caches\transforms-3\98d6d6efad33ddcfb57ba737d319c564\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+139            <meta-data
+139-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+140                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+140-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+141                android:value="androidx.startup" />
+141-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+142        </provider>
+143
+144        <receiver
+144-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+145            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+145-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+146            android:directBootAware="false"
+146-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+147            android:enabled="true"
+147-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+148            android:exported="true"
+148-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+149            android:permission="android.permission.DUMP" >
+149-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+150            <intent-filter>
+150-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+151                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+151-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+151-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+152            </intent-filter>
+153            <intent-filter>
+153-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+154                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+154-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+154-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+155            </intent-filter>
+156            <intent-filter>
+156-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+157                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+157-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+157-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+158            </intent-filter>
+159            <intent-filter>
+159-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+160                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+160-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+160-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\vivek\.gradle\caches\transforms-3\3dc6efde8ea4b94daf9313698e149906\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+161            </intent-filter>
+162        </receiver>
+163
+164        <activity
+164-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:47:9-53:63
+165            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+165-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:48:13-74
+166            android:clearTaskOnLaunch="true"
+166-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:49:13-45
+167            android:screenOrientation="sensorLandscape"
+167-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:50:13-56
+168            android:stateNotNeeded="true"
+168-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:51:13-42
+169            android:theme="@style/zxing_CaptureTheme"
+169-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:52:13-54
+170            android:windowSoftInputMode="stateAlwaysHidden" />
+170-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\vivek\.gradle\caches\transforms-3\123c3d271431d5753d1c3d7b20323625\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:53:13-60
+171    </application>
+172
+173</manifest>
