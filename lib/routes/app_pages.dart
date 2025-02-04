@@ -19,7 +19,6 @@ import 'package:jewelbook_calculator/ui/touchwise_balance_screen/touchwise_balan
 import '../ui/dashboard/dashboard_binding.dart';
 import '../ui/login_screen/login_binding.dart';
 import '../ui/otp_screen/otp_binding.dart';
-import '../ui/splash_screen/splash_binding.dart';
 
 part 'app_routes.dart';
 
@@ -27,11 +26,11 @@ class AppPages {
   static const initial = Routes.splash;
 
   static final routes = [
-    GetPage(
-      name: _Paths.splash,
-      page: () => const SplashScreen(),
-      binding: SplashBinding(),
-    ),
+    // GetPage(
+    //   name: _Paths.splash,
+    //   // page: () => const SplashScreen(),
+    //   binding: SplashBinding(),
+    // ),
     GetPage(
       name: _Paths.login,
       page: () => const LoginScreen(),

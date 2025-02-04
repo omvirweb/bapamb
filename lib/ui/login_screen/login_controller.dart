@@ -5,13 +5,13 @@ import 'package:jewelbook_calculator/routes/app_pages.dart';
 import '../../services/http_service.dart';
 
 class LoginController extends GetxController {
-  final TextEditingController mobilenumber = TextEditingController();
+  final TextEditingController username = TextEditingController();
   final HTTPService _httpService = HTTPService();
 
   Future<void> login() async {
-    if (mobilenumber.text.isNotEmpty) {
+    if (username.text.isNotEmpty) {
       final data = {
-        'mobile_number': mobilenumber.text,
+        'mobile_number': username.text,
       };
 
       try {
@@ -19,7 +19,7 @@ class LoginController extends GetxController {
 
         if (response.data['status'] == 1) {
           Get.toNamed(Routes.otp, arguments: {
-            'mobile_number': mobilenumber.text,
+            'mobile_number': username.text,
             'otp': response.data['otp'].toString()
           });
         } else {

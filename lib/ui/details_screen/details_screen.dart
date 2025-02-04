@@ -18,15 +18,14 @@ class DetailScreen extends StatelessWidget {
           return true;
         },
         child: Scaffold(
-          appBar: _buildAppBar(context,controller),
+          appBar: _buildAppBar(context, controller),
           body: _buildBody(controller.itemDetails),
         ),
       );
     });
   }
 
-
-  AppBar _buildAppBar(BuildContext context,ItemDetailsController controller) {
+  AppBar _buildAppBar(BuildContext context, ItemDetailsController controller) {
     return AppBar(
       elevation: 10.0,
       backgroundColor: Colors.white,
@@ -42,30 +41,31 @@ class DetailScreen extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
-            _handleEdit(controller);
+            // _handleEdit(controller);
           },
         ),
         IconButton(
           icon: const Icon(Icons.delete),
           onPressed: () {
-            _showDeleteConfirmationDialog(context,controller);
+            _showDeleteConfirmationDialog(context, controller);
           },
         ),
       ],
     );
   }
 
-  Future<void> _handleEdit(ItemDetailsController controller) async {
-    final result = await Get.to(() => controller.itemDetails['type'] == 'issue'
-        ?  IssueItemScreen()
-        :  ReceivedItemScreen(), arguments: controller.itemDetails);
+  // Future<void> _handleEdit(ItemDetailsController controller) async {
+  //   final result = await Get.to(() => controller.itemDetails['type'] == 'issue'
+  //       ?  IssueItemScreen()
+  //       :  ReceivedItemScreen(), arguments: controller.itemDetails);
 
-    if (result != null) {
-      controller.updateItem(result);
-    }
-  }
+  //   if (result != null) {
+  //     controller.updateItem(result);
+  //   }
+  // }
 
-  void _showDeleteConfirmationDialog(BuildContext context,ItemDetailsController _itemDetailsController) {
+  void _showDeleteConfirmationDialog(
+      BuildContext context, ItemDetailsController _itemDetailsController) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -86,7 +86,8 @@ class DetailScreen extends StatelessWidget {
                 });
 
                 Future.delayed(Duration(milliseconds: 600), () {
-                  _itemDetailsController.deleteItem(_itemDetailsController.itemDetails['id'].toString());
+                  _itemDetailsController.deleteItem(
+                      _itemDetailsController.itemDetails['id'].toString());
                   if (_itemDetailsController.isSuccess.value) {
                     Get.snackbar(
                         'Success', "" + _itemDetailsController.msg.value);
@@ -94,7 +95,8 @@ class DetailScreen extends StatelessWidget {
                 });
 
                 Future.delayed(Duration(milliseconds: 1000), () {
-                  _itemDetailsController.deleteItem(_itemDetailsController.itemDetails['id'].toString());
+                  _itemDetailsController.deleteItem(
+                      _itemDetailsController.itemDetails['id'].toString());
                   if (_itemDetailsController.isSuccess.value) {
                     Get.back(result: true);
                   }
@@ -210,8 +212,11 @@ class DetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-          Text(value?.toString() ?? 'N/A', style: const TextStyle(fontSize: 16)),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          Text(value?.toString() ?? 'N/A',
+              style: const TextStyle(fontSize: 16)),
         ],
       ),
     );

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:jewelbook_calculator/ui/issue_item_screen/issue_item_screen.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:jewelbook_calculator/ui/issue_item/issue_Item_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class qrCodeScanner extends StatefulWidget {
   @override
@@ -22,6 +25,50 @@ class _qrCodeScannerState extends State<qrCodeScanner> {
         controller!.resumeCamera();
       }
     }
+  }
+
+  Future<void> fetchAndNavigate(String qrCodeValue) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? sessionToken = prefs.getString('auth_token');
+
+    try {
+      var response = await http.get(
+        Uri.parse(
+            'http://20.244.92.124/bapaapi/public/api/item-stock-rfid/$qrCodeValue'),
+        headers: {
+          'Authorization': 'Bearer $sessionToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseBody = json.decode(response.body);
+
+        if (responseBody['status'] == true) {
+          Map<String, dynamic> data = responseBody['data'];
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => IssueItemScreen(data: data),
+            ),
+          );
+        } else {
+          _showError('Error: ${responseBody['message']}');
+        }
+      } else {
+        _showError('Failed to fetch data: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showError('An error occurred: $e');
+    }
+
+    setState(() => isProcessing = false);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -53,8 +100,7 @@ class _qrCodeScannerState extends State<qrCodeScanner> {
               cutOutSize: MediaQuery.of(context).size.width * 0.7,
             ),
           ),
-          // Add instructions or animations if necessary
-          Positioned(
+          const Positioned(
             bottom: 20,
             left: 0,
             right: 0,
@@ -76,17 +122,10 @@ class _qrCodeScannerState extends State<qrCodeScanner> {
       if (isProcessing) return;
       setState(() => isProcessing = true);
 
-      final code = scanData.code ?? 'Unknown QR Code';
-      print("Scanned QR Code: $code");
+      final qrCodeValue = scanData.code ?? '';
+      print("Scanned QR Code: $qrCodeValue");
 
-      await Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => IssueItemScreen(),
-        ),
-      );
-
-      setState(() => isProcessing = false);
+      await fetchAndNavigate(qrCodeValue);
     });
   }
 

@@ -1,23 +1,19 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:jewelbook_calculator/controllers/autofill_data_controller.dart';
-import 'package:jewelbook_calculator/controllers/issue_item_controller.dart';
 import 'package:jewelbook_calculator/ui/dashboard/dashboard.dart';
 import 'package:jewelbook_calculator/ui/mobile_scanner/qr_code_scanner.dart';
-import 'package:jewelbook_calculator/widget/ItemAutocompleteWidget.dart';
-import 'package:jewelbook_calculator/widget/NotesAutocompleteWidget.dart';
-import 'package:jewelbook_calculator/widget/PartyAutocompleteWidget.dart';
-import 'package:jewelbook_calculator/widget/TouchAutocompleteWidget.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widget/DefaultTextField.dart';
+import 'package:http/http.dart' as http;
 
 class IssueItemScreen extends StatefulWidget {
+  final Map<String, dynamic> data;
+  const IssueItemScreen({Key? key, required this.data}) : super(key: key);
   @override
   _IssueItemScreenState createState() => _IssueItemScreenState();
 }
@@ -29,26 +25,34 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
       MethodChannel('com.example.jewelbook_bapa/android_id');
   // Static values
   final String selectedItem = 'Butti';
-  final String weight = '18.900';
-  final String less = '0.900';
-  final String touch = '92';
-  final String wastage = '5';
+  late String weight;
+  late String less;
+  late String touch;
+  late String wastage;
 
   final TextEditingController weightTxtController = TextEditingController();
+  final TextEditingController itemNameController = TextEditingController();
   final TextEditingController lessTxtController = TextEditingController();
   final TextEditingController addTxtController = TextEditingController();
   final TextEditingController touchTxtController = TextEditingController();
   final TextEditingController wastageTxtController = TextEditingController();
   final TextEditingController dateTxtController = TextEditingController();
   final TextEditingController notesTxtController = TextEditingController();
+  // Controllers for net weight and fine
+  final TextEditingController netWeightController = TextEditingController();
+  final TextEditingController fineController = TextEditingController();
 
-  final IssueItemController _issueItemController = Get.find();
-  final AutofillDataController _autofillDataController = Get.find();
+  // final AutofillDataController _autofillDataController = Get.find();
 
   @override
   void initState() {
     super.initState();
     // Set initial values
+    itemNameController.text = selectedItem;
+    weight = widget.data["rfid_ntwt"].toString();
+    less = widget.data["rfid_less"].toString();
+    touch = widget.data["rfid_tunch"].toString();
+    wastage = widget.data["rfid_add"].toString();
     weightTxtController.text = weight;
     lessTxtController.text = less;
     touchTxtController.text = touch;
@@ -60,12 +64,84 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     _updateFine();
   }
 
+  Future<String?> fetchAndOpenPdf() async {
+    final String apiUrl = "http://20.244.92.124/bapaapi/public/api/get_pdf";
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('auth_token');
+
+      if (token == null) {
+        print("Token not found!");
+        return null;
+      }
+
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.fields['sell_id'] = '125';
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      print(response);
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        print(data);
+
+        if (data.containsKey('pdf')) {
+          String base64Pdf = data['pdf'];
+
+          // Decode Base64
+          List<int> pdfBytes = base64Decode(base64Pdf);
+
+          // Save the file
+          final directory = await getApplicationDocumentsDirectory();
+          final filePath = "${directory.path}/generated.pdf";
+          File pdfFile = File(filePath);
+          await pdfFile.writeAsBytes(pdfBytes);
+
+          print("PDF Saved at: $filePath");
+
+          // Share the PDF file
+          await Share.shareXFiles([XFile(filePath)],
+              text: 'Here is your PDF file.');
+
+          return filePath; // Return the path of the saved PDF
+        } else {
+          print("PDF data not found in response!");
+        }
+      } else {
+        print("API Error: ${response.statusCode}, ${response.body}");
+      }
+    } catch (e) {
+      print("Exception: $e");
+    }
+    return null; // Return null if there was an error
+  }
+
+  Future<void> sharePdf() async {
+    String? filePath = await fetchAndOpenPdf(); // Get the PDF file path
+
+    if (filePath != null) {
+      File pdfFile = File(filePath);
+
+      if (await pdfFile.exists()) {
+        await Share.shareXFiles([XFile(filePath, mimeType: 'application/pdf')]);
+      } else {
+        print("File does not exist at: $filePath");
+      }
+    } else {
+      print("Failed to fetch PDF");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        _autofillDataController.selectedPartyName.value = '';
-        _autofillDataController.selectedItemName.value = '';
         return true;
       },
       child: Scaffold(
@@ -83,11 +159,7 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
       leading: Builder(
         builder: (context) {
           return InkWell(
-            onTap: () {
-              _autofillDataController.selectedPartyName.value = '';
-              _autofillDataController.selectedItemName.value = '';
-              Get.back(); // Navigate back
-            },
+            onTap: () {},
             child: const Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 25,
@@ -126,14 +198,12 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          PartyAutocompleteWidget(
-            name_txt: _autofillDataController.selectedPartyName.value,
-            isEdit: isEdit,
-          ),
-          ItemAutocompleteWidget(
-            name_txt: selectedItem, // Always show 'Butti'
-            isEdit: isEdit,
-          ),
+          DefaultTextField(
+              hint_txt: "Enter Item",
+              label_txt: "Item",
+              keyboard_type: TextInputType.text,
+              txtController: itemNameController,
+              textInputAction: TextInputAction.next),
           DefaultTextField(
               hint_txt: "Enter Weight",
               label_txt: "Weight",
@@ -161,22 +231,22 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
               keyboard_type: TextInputType.number,
               txtController: addTxtController,
               textInputAction: TextInputAction.next),
-          Obx(() => DefaultTextField(
+          DefaultTextField(
               hint_txt: "Net Wt.",
               label_txt: "Net Wt.",
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
               ],
               keyboard_type: TextInputType.number,
-              txtController: TextEditingController(
-                text: _issueItemController.net_weight.value.toStringAsFixed(3),
-              ),
+              txtController: netWeightController,
               enabled: false,
-              textInputAction: TextInputAction.next)),
-          TouchAutocompleteWidget(
-            name_txt: touchTxtController.text,
-            txtController: touchTxtController,
-          ),
+              textInputAction: TextInputAction.next),
+          DefaultTextField(
+              hint_txt: "Enter Touch",
+              label_txt: "Touch",
+              keyboard_type: TextInputType.text,
+              txtController: touchTxtController,
+              textInputAction: TextInputAction.next),
           DefaultTextField(
               hint_txt: "Enter Wastage",
               label_txt: "Wastage",
@@ -186,15 +256,13 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
               keyboard_type: TextInputType.number,
               txtController: wastageTxtController,
               textInputAction: TextInputAction.next),
-          Obx(() => DefaultTextField(
+          DefaultTextField(
               hint_txt: "Fine",
               label_txt: "Fine",
               keyboard_type: TextInputType.number,
-              txtController: TextEditingController(
-                text: _issueItemController.final_fine.value.toStringAsFixed(3),
-              ),
+              txtController: fineController,
               enabled: false,
-              textInputAction: TextInputAction.next)),
+              textInputAction: TextInputAction.next),
           InkWell(
             onTap: () => _selectDate(context),
             child: IgnorePointer(
@@ -206,10 +274,12 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
               ),
             ),
           ),
-          Notesautocompletewidget(
-            name_txt: notesTxtController.text,
-            txtController: notesTxtController,
-          ),
+          DefaultTextField(
+              hint_txt: "Enter Notes",
+              label_txt: "Notes",
+              keyboard_type: TextInputType.text,
+              txtController: notesTxtController,
+              textInputAction: TextInputAction.next),
           const SizedBox(
             height: 50,
           ),
@@ -358,21 +428,19 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
 
     double netWeight = weight - less + add;
 
-    _issueItemController.net_weight.value =
-        double.parse(netWeight.toStringAsFixed(3));
-
-    _updateFine();
+    netWeightController.text =
+        netWeight.toStringAsFixed(3); // Update the net weight controller
+    _updateFine(); // Update fine whenever net weight changes
   }
 
   void _updateFine() {
-    double netWeight = _issueItemController.net_weight.value;
+    double netWeight = double.tryParse(netWeightController.text) ?? 0.0;
     double touch = double.tryParse(touchTxtController.text) ?? 0.0;
     double wastage = double.tryParse(wastageTxtController.text) ?? 0.0;
 
     double fine = netWeight * (touch + wastage) / 100;
 
-    _issueItemController.final_fine.value =
-        double.parse(fine.toStringAsFixed(3));
+    fineController.text = fine.toStringAsFixed(3); // Update the fine controller
   }
 
   // Method to get the current date in DD-MM-YYYY format

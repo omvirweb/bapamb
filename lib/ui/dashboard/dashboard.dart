@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:jewelbook_calculator/ui/login_screen/login_screen.dart';
 import 'package:jewelbook_calculator/ui/mobile_scanner/qr_code_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -10,12 +12,65 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  Future<void> logout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    prefs.remove('isLoggedIn');
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+
+  bool _onWillPop(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Are you sure?'),
+          content:
+              const Text('Are you sure you want to leave this Application?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                'No',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: const Text('Yes', style: TextStyle(color: Colors.green)),
+              onPressed: () {
+                //application closed using this one navigator.
+                SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+              },
+            ),
+          ],
+        );
+      },
+    );
+    return false; // Prevent the default back button behavior
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _appBar(context),
-      body: _qrCodeScanButton(context),
-      drawer: _buildDrawer(context),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) {
+        if (didPop) {
+          return;
+        }
+        print("Showing alert dialog");
+        _onWillPop(context);
+      },
+      child: Scaffold(
+        appBar: _appBar(context),
+        body: _qrCodeScanButton(context),
+        drawer: _buildDrawer(context),
+      ),
     );
   }
 
@@ -101,59 +156,47 @@ class _DashboardState extends State<Dashboard> {
               // Get.to(const Dashboard());
             },
           ),
-          // ListTile(
-          //   leading: const Icon(Icons.group_add_rounded),
-          //   title: const Text('Saving Scheme'),
-          //   onTap: () {
-          //     Navigator.push(
-          //         context,
-          //         MaterialPageRoute(
-          //           builder: (context) => savingSchemeScreen(),
-          //         ));
-          //     // Get.to(IssueItemScreen());
-          //   },
-          // ),
-          // ListTile(
-          //   leading: const Icon(Icons.group_add_rounded),
-          //   title: const Text('Join Saving Scheme'),
-          //   onTap: () {
-          //     Navigator.push(
-          //         context,
-          //         MaterialPageRoute(
-          //           builder: (context) => savingSchemeJoinScreen(),
-          //         ));
-          //     // Get.to(IssueItemScreen());
-          //   },
-          // ),
-
-          // ListTile(
-          //   leading: const Icon(Icons.group_add_rounded),
-          //   title: const Text('My Home Page'),
-          //   onTap: () {
-          //     Navigator.push(
-          //         context,
-          //         MaterialPageRoute(
-          //           builder: (context) => MyHomePage(),
-          //         ));
-          //     // Get.to(IssueItemScreen());
-          //   },
-          // ),
 
           Expanded(child: Container()),
           const Divider(), // Divider to separate the logout option
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () async {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginScreen(),
-                ),
-                (route) => false,
-              );
-            },
-          ),
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Logout'),
+                      content: Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            logout(context);
+                          },
+                          child: Text(
+                            'Yes',
+                            style: TextStyle(
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(
+                            'No',
+                            style: TextStyle(
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }),
         ],
       ),
     );
