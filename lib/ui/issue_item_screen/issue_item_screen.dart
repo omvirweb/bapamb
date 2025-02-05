@@ -29,6 +29,8 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
   late String less;
   late String touch;
   late String wastage;
+  List<String> partySuggestions = [];
+  bool isLoading = false;
 
   final TextEditingController weightTxtController = TextEditingController();
   final TextEditingController itemNameController = TextEditingController();
@@ -38,6 +40,7 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
   final TextEditingController wastageTxtController = TextEditingController();
   final TextEditingController dateTxtController = TextEditingController();
   final TextEditingController notesTxtController = TextEditingController();
+  final TextEditingController partyNameController = TextEditingController();
   // Controllers for net weight and fine
   final TextEditingController netWeightController = TextEditingController();
   final TextEditingController fineController = TextEditingController();
@@ -49,10 +52,10 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     super.initState();
     // Set initial values
     itemNameController.text = selectedItem;
-    weight = widget.data["rfid_ntwt"].toString();
+    weight = widget.data["rfid_grwt"].toString();
     less = widget.data["rfid_less"].toString();
     touch = widget.data["rfid_tunch"].toString();
-    wastage = widget.data["rfid_add"].toString();
+    wastage = widget.data["wastage"].toString();
     weightTxtController.text = weight;
     lessTxtController.text = less;
     touchTxtController.text = touch;
@@ -64,7 +67,119 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     _updateFine();
   }
 
-  Future<String?> fetchAndOpenPdf() async {
+  Future<void> fetchPartyNames(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        partySuggestions = [];
+      });
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('auth_token');
+
+    if (token == null) {
+      print("Token not found!");
+      return;
+    }
+
+    final String url = 'http://20.244.92.124/bapaapi/public/api/party_list';
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token', // Replace with your token
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      print(data);
+      if (data['status'] == 1) {
+        setState(() {
+          partySuggestions = List<String>.from(
+            data['records']['data'].map((party) => party['account_name']),
+          );
+        });
+      }
+    } else {
+      // Handle error
+      setState(() {
+        partySuggestions = [];
+      });
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> fetchAndWhatsappPdf() async {
+    final String apiUrl = "http://20.244.92.124/bapaapi/public/api/get_pdf";
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('auth_token');
+
+      if (token == null) {
+        print("Token not found!");
+        return;
+      }
+
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.fields['sell_id'] = '125';
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        print("API Response: $data");
+
+        if (data.containsKey('pdf')) {
+          String pdfUrl = data['pdf']; // Get PDF URL from the API response.
+
+          // Download the PDF and save it locally.
+          final tempDir = await getTemporaryDirectory();
+          final String pdfPath = '${tempDir.path}/dynamic_bill.pdf';
+
+          var pdfResponse = await http.get(Uri.parse(pdfUrl));
+          if (pdfResponse.statusCode == 200) {
+            final file = File(pdfPath);
+            await file.writeAsBytes(pdfResponse.bodyBytes);
+
+            // Share the PDF to WhatsApp using the native method.
+            try {
+              await platform.invokeMethod(
+                'shareToWhatsApp',
+                {'pdfPath': pdfPath},
+              );
+            } on PlatformException catch (e) {
+              print("Failed to share PDF to WhatsApp: ${e.message}");
+            }
+          } else {
+            print("Failed to download the PDF: ${pdfResponse.statusCode}");
+          }
+        } else {
+          print("PDF URL not found in response!");
+        }
+      } else {
+        print("API Error: ${response.statusCode}, ${response.body}");
+      }
+    } catch (e) {
+      print("Exception: $e");
+    }
+  }
+
+  Future<String?> fetchAndSharePdf() async {
     final String apiUrl = "http://20.244.92.124/bapaapi/public/api/get_pdf";
 
     try {
@@ -86,32 +201,16 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
-      print(response);
+
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
-        print(data);
+        print("API Response: $data");
 
         if (data.containsKey('pdf')) {
-          String base64Pdf = data['pdf'];
-
-          // Decode Base64
-          List<int> pdfBytes = base64Decode(base64Pdf);
-
-          // Save the file
-          final directory = await getApplicationDocumentsDirectory();
-          final filePath = "${directory.path}/generated.pdf";
-          File pdfFile = File(filePath);
-          await pdfFile.writeAsBytes(pdfBytes);
-
-          print("PDF Saved at: $filePath");
-
-          // Share the PDF file
-          await Share.shareXFiles([XFile(filePath)],
-              text: 'Here is your PDF file.');
-
-          return filePath; // Return the path of the saved PDF
+          String pdfUrl = data['pdf']; // PDF URL from API response
+          return await downloadAndSharePdf(pdfUrl);
         } else {
-          print("PDF data not found in response!");
+          print("PDF URL not found in response!");
         }
       } else {
         print("API Error: ${response.statusCode}, ${response.body}");
@@ -119,23 +218,33 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     } catch (e) {
       print("Exception: $e");
     }
-    return null; // Return null if there was an error
+    return null;
   }
 
-  Future<void> sharePdf() async {
-    String? filePath = await fetchAndOpenPdf(); // Get the PDF file path
+  Future<String?> downloadAndSharePdf(String pdfUrl) async {
+    try {
+      final response = await http.get(Uri.parse(pdfUrl));
 
-    if (filePath != null) {
-      File pdfFile = File(filePath);
+      if (response.statusCode == 200) {
+        final directory = await getApplicationDocumentsDirectory();
+        final filePath = "${directory.path}/downloaded.pdf";
+        File pdfFile = File(filePath);
+        await pdfFile.writeAsBytes(response.bodyBytes);
 
-      if (await pdfFile.exists()) {
-        await Share.shareXFiles([XFile(filePath, mimeType: 'application/pdf')]);
+        print("PDF Downloaded at: $filePath");
+
+        // Share the PDF file
+        await Share.shareXFiles([XFile(filePath)],
+            text: 'Here is your PDF file.');
+
+        return filePath;
       } else {
-        print("File does not exist at: $filePath");
+        print("Failed to download PDF: ${response.statusCode}");
       }
-    } else {
-      print("Failed to fetch PDF");
+    } catch (e) {
+      print("Exception while downloading PDF: $e");
     }
+    return null;
   }
 
   @override
@@ -198,6 +307,46 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     return SingleChildScrollView(
       child: Column(
         children: [
+          TextFormField(
+            controller: partyNameController,
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: "Party Name",
+              hintText: "Enter Party Name",
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) {
+              fetchPartyNames(value);
+            },
+          ),
+          if (isLoading) Center(child: CircularProgressIndicator()),
+          if (partySuggestions.isNotEmpty)
+            Container(
+              constraints:
+                  BoxConstraints(maxHeight: 200), // List ka height limit
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 4)],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: BouncingScrollPhysics(),
+                itemCount: partySuggestions.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(partySuggestions[index]),
+                    onTap: () {
+                      setState(() {
+                        partyNameController.text = partySuggestions[index];
+                        partySuggestions.clear(); // Suggestions ko clear karna
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
           DefaultTextField(
               hint_txt: "Enter Item",
               label_txt: "Item",
@@ -290,30 +439,6 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => qrCodeScanner(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange.shade900,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.qr_code_scanner,
-                    color: Colors.white,
-                  ),
-                  label: const Text("Add More"),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
@@ -339,31 +464,7 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    final Directory tempDir = await getTemporaryDirectory();
-                    final String pdfPath = '${tempDir.path}/billPrint.pdf';
-
-                    // If the file doesn't exist, copy it from assets
-                    if (!File(pdfPath).existsSync()) {
-                      final ByteData data =
-                          await rootBundle.load('assets/billPrint.pdf');
-                      final File file = File(pdfPath);
-                      await file.writeAsBytes(data.buffer.asUint8List());
-                    }
-
-                    // Ensure the file exists before attempting to share
-                    final file = File(pdfPath);
-                    if (file.existsSync()) {
-                      // Share the PDF to WhatsApp via native method
-                      try {
-                        // Assuming platform is defined as MethodChannel elsewhere
-                        await platform.invokeMethod(
-                            'shareToWhatsApp', {'pdfPath': pdfPath});
-                      } on PlatformException catch (e) {
-                        print("Failed to share PDF to WhatsApp: ${e.message}");
-                      }
-                    } else {
-                      print("The PDF file does not exist at path: $pdfPath");
-                    }
+                    await fetchAndWhatsappPdf();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepOrange.shade900,
@@ -382,19 +483,7 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    final Directory tempDir = await getTemporaryDirectory();
-                    final String pdfPath = '${tempDir.path}/billPrint.pdf';
-
-                    // If the file is local, copy it from assets
-                    if (!File(pdfPath).existsSync()) {
-                      final ByteData data =
-                          await rootBundle.load('assets/billPrint.pdf');
-                      final File file = File(pdfPath);
-                      await file.writeAsBytes(data.buffer.asUint8List());
-                    }
-
-                    // Share the PDF file using Share Plus
-                    await Share.shareXFiles([XFile(pdfPath)], text: 'Bill');
+                    await fetchAndSharePdf();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepOrange.shade900,

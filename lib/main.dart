@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:jewelbook_calculator/controllers/issue_item_controller.dart';
 import 'package:jewelbook_calculator/routes/customNavigator.dart';
 import 'package:jewelbook_calculator/ui/login_screen/login_screen.dart';
 import 'package:jewelbook_calculator/ui/splash_screen/splash_screen.dart';
