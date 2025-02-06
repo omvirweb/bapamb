@@ -1,7 +1,10 @@
+// ignore_for_file: avoid_print, deprecated_member_use, prefer_const_declarations
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:jewelbook_calculator/ui/dashboard/dashboard.dart';
 import 'package:jewelbook_calculator/ui/mobile_scanner/qr_code_scanner.dart';
@@ -23,13 +26,15 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
   bool isEdit = true;
   static const platform =
       MethodChannel('com.example.jewelbook_bapa/android_id');
-  // Static values
-  final String selectedItem = 'Butti';
   late String weight;
   late String less;
   late String touch;
   late String wastage;
   List<String> partySuggestions = [];
+  List<String> allPartyNames = [];
+  List<Map<String, dynamic>> itemList = []; // To hold the fetched items
+  String? selectedItemId;
+
   bool isLoading = false;
 
   final TextEditingController weightTxtController = TextEditingController();
@@ -51,7 +56,6 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
   void initState() {
     super.initState();
     // Set initial values
-    itemNameController.text = selectedItem;
     weight = widget.data["rfid_grwt"].toString();
     less = widget.data["rfid_less"].toString();
     touch = widget.data["rfid_tunch"].toString();
@@ -65,16 +69,47 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     // Calculate initial net weight and fine
     _updateNetWeight();
     _updateFine();
+    fetchAllPartyNames();
+    fetchItemList();
   }
 
-  Future<void> fetchPartyNames(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        partySuggestions = [];
-      });
-      return;
-    }
+  Future<void> fetchItemList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? sessionToken = prefs.getString('auth_token');
 
+    try {
+      final response = await http.get(
+        Uri.parse('http://20.244.92.124/bapaapi/public/api/item_list'),
+        headers: {
+          'Authorization': 'Bearer $sessionToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        if (responseBody['status'] == 1) {
+          setState(() {
+            itemList = List<Map<String, dynamic>>.from(
+                responseBody['records']['data']);
+          });
+        } else {
+          _showError('Error: ${responseBody['message']}');
+        }
+      } else {
+        _showError('Failed to fetch items: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showError('An error occurred: $e');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> fetchAllPartyNames() async {
     setState(() {
       isLoading = true;
     });
@@ -100,7 +135,7 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
       print(data);
       if (data['status'] == 1) {
         setState(() {
-          partySuggestions = List<String>.from(
+          allPartyNames = List<String>.from(
             data['records']['data'].map((party) => party['account_name']),
           );
         });
@@ -108,12 +143,27 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     } else {
       // Handle error
       setState(() {
-        partySuggestions = [];
+        allPartyNames = [];
       });
     }
 
     setState(() {
       isLoading = false;
+    });
+  }
+
+  void filterPartyNames(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        partySuggestions = [];
+      });
+      return;
+    }
+
+    setState(() {
+      partySuggestions = allPartyNames
+          .where((party) => party.toLowerCase().contains(query.toLowerCase()))
+          .toList();
     });
   }
 
@@ -247,6 +297,72 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     return null;
   }
 
+  Future<void> _saveItem() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? sessionToken = prefs.getString('auth_token');
+
+    if (sessionToken == null) {
+      _showError("Token not found!");
+      return;
+    }
+
+    final String url = 'http://20.244.92.124/bapaapi/public/api/sell_item';
+
+    final Map<String, dynamic> requestBody = {
+      'item_id': selectedItemId,
+      'item_name': itemNameController.text,
+      'party_id':
+          partyNameController.text, // Assuming you have a way to get party_id
+      'party_name': partyNameController.text,
+      'date': dateTxtController.text,
+      'note': notesTxtController.text,
+      'weight': weightTxtController.text,
+      'less': lessTxtController.text,
+      'net_wt': netWeightController.text,
+      'touch': touchTxtController.text,
+      'wastage': wastageTxtController.text,
+      'fine': fineController.text,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $sessionToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        if (responseBody['status'] == 1) {
+          Get.snackbar(
+            "Success",
+            "Item Save successfully!",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const Dashboard(),
+            ),
+            (route) => false,
+          );
+        } else {
+          _showError('Error: ${responseBody['message']}');
+        }
+      } else {
+        _showError('Failed to save item: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showError('An error occurred: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -305,207 +421,247 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     });
 
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          TextFormField(
-            controller: partyNameController,
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              labelText: "Party Name",
-              hintText: "Enter Party Name",
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              fetchPartyNames(value);
-            },
-          ),
-          if (isLoading) Center(child: CircularProgressIndicator()),
-          if (partySuggestions.isNotEmpty)
-            Container(
-              constraints:
-                  BoxConstraints(maxHeight: 200), // List ka height limit
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 4)],
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: BouncingScrollPhysics(),
-                itemCount: partySuggestions.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(partySuggestions[index]),
-                    onTap: () {
-                      setState(() {
-                        partyNameController.text = partySuggestions[index];
-                        partySuggestions.clear(); // Suggestions ko clear karna
-                      });
-                    },
-                  );
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus(); // Close the keyboard
+        },
+        child: Column(
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
+              child: TextFormField(
+                controller: partyNameController,
+                keyboardType: TextInputType.text,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: "Party Name",
+                  hintText: "Enter Party Name",
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  filterPartyNames(value); // Filter suggestions based on input
                 },
               ),
             ),
-          DefaultTextField(
-              hint_txt: "Enter Item",
-              label_txt: "Item",
-              keyboard_type: TextInputType.text,
-              txtController: itemNameController,
-              textInputAction: TextInputAction.next),
-          DefaultTextField(
-              hint_txt: "Enter Weight",
-              label_txt: "Weight",
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
-              ],
-              keyboard_type: TextInputType.number,
-              txtController: weightTxtController,
-              textInputAction: TextInputAction.next),
-          DefaultTextField(
-              hint_txt: "Enter Less",
-              label_txt: "Less",
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
-              ],
-              keyboard_type: TextInputType.number,
-              txtController: lessTxtController,
-              textInputAction: TextInputAction.next),
-          DefaultTextField(
-              hint_txt: "Enter Add",
-              label_txt: "Add",
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
-              ],
-              keyboard_type: TextInputType.number,
-              txtController: addTxtController,
-              textInputAction: TextInputAction.next),
-          DefaultTextField(
-              hint_txt: "Net Wt.",
-              label_txt: "Net Wt.",
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
-              ],
-              keyboard_type: TextInputType.number,
-              txtController: netWeightController,
-              enabled: false,
-              textInputAction: TextInputAction.next),
-          DefaultTextField(
-              hint_txt: "Enter Touch",
-              label_txt: "Touch",
-              keyboard_type: TextInputType.text,
-              txtController: touchTxtController,
-              textInputAction: TextInputAction.next),
-          DefaultTextField(
-              hint_txt: "Enter Wastage",
-              label_txt: "Wastage",
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))
-              ],
-              keyboard_type: TextInputType.number,
-              txtController: wastageTxtController,
-              textInputAction: TextInputAction.next),
-          DefaultTextField(
-              hint_txt: "Fine",
-              label_txt: "Fine",
-              keyboard_type: TextInputType.number,
-              txtController: fineController,
-              enabled: false,
-              textInputAction: TextInputAction.next),
-          InkWell(
-            onTap: () => _selectDate(context),
-            child: IgnorePointer(
-              child: DefaultTextField(
-                hint_txt: "Date",
-                label_txt: "Date",
-                keyboard_type: TextInputType.number,
-                txtController: dateTxtController,
-              ),
-            ),
-          ),
-          DefaultTextField(
-              hint_txt: "Enter Notes",
-              label_txt: "Notes",
-              keyboard_type: TextInputType.text,
-              txtController: notesTxtController,
-              textInputAction: TextInputAction.next),
-          const SizedBox(
-            height: 50,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Dashboard(),
-                      ),
-                      (route) => false,
+            if (isLoading) const Center(child: CircularProgressIndicator()),
+            if (partySuggestions.isNotEmpty)
+              Container(
+                constraints: const BoxConstraints(
+                    maxHeight: 150, maxWidth: 320), // List ka height limit
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.grey, blurRadius: 4)
+                  ],
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: partySuggestions.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(partySuggestions[index]),
+                      onTap: () {
+                        setState(() {
+                          partyNameController.text = partySuggestions[index];
+                          partySuggestions
+                              .clear(); // Suggestions ko clear karna
+                        });
+                      },
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange.shade900,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.save,
-                    color: Colors.white,
-                  ),
-                  label: const Text("Save"),
                 ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await fetchAndWhatsappPdf();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange.shade900,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.print,
-                    color: Colors.white,
-                  ),
-                  label: const Text("Save & Send to Whatsapp"),
+              ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: DropdownButtonFormField<String>(
+                value: selectedItemId,
+                hint: const Text("Select Item"),
+                items: itemList.map((item) {
+                  return DropdownMenuItem<String>(
+                    value: item['id'].toString(),
+                    child: Text(item['item_name']),
+                  );
+                }).toList(),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await fetchAndSharePdf();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange.shade900,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.print,
-                    color: Colors.white,
-                  ),
-                  label: const Text("Save & Share"),
-                ),
-              ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedItemId = value; // Update the selected item ID
+                    itemNameController.text = itemList.firstWhere(
+                        (item) => item['id'].toString() == value)['item_name'];
+                  });
+                },
+              ),
             ),
-          ),
-          const SizedBox(
-            height: 50,
-          ),
-        ],
+            DefaultTextField(
+                hint_txt: "Enter Weight",
+                label_txt: "Weight",
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
+                ],
+                keyboard_type: TextInputType.number,
+                txtController: weightTxtController,
+                textInputAction: TextInputAction.next),
+            DefaultTextField(
+                hint_txt: "Enter Less",
+                label_txt: "Less",
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
+                ],
+                keyboard_type: TextInputType.number,
+                txtController: lessTxtController,
+                textInputAction: TextInputAction.next),
+            DefaultTextField(
+                hint_txt: "Net Wt.",
+                label_txt: "Net Wt.",
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}'))
+                ],
+                keyboard_type: TextInputType.number,
+                txtController: netWeightController,
+                enabled: false,
+                textInputAction: TextInputAction.next),
+            DefaultTextField(
+                hint_txt: "Enter Touch",
+                label_txt: "Touch",
+                keyboard_type: TextInputType.text,
+                txtController: touchTxtController,
+                textInputAction: TextInputAction.next),
+            DefaultTextField(
+                hint_txt: "Enter Wastage",
+                label_txt: "Wastage",
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))
+                ],
+                keyboard_type: TextInputType.number,
+                txtController: wastageTxtController,
+                textInputAction: TextInputAction.next),
+            DefaultTextField(
+                hint_txt: "Fine",
+                label_txt: "Fine",
+                keyboard_type: TextInputType.number,
+                txtController: fineController,
+                enabled: false,
+                textInputAction: TextInputAction.next),
+            InkWell(
+              onTap: () => _selectDate(context),
+              child: IgnorePointer(
+                child: DefaultTextField(
+                  hint_txt: "Date",
+                  label_txt: "Date",
+                  keyboard_type: TextInputType.number,
+                  txtController: dateTxtController,
+                ),
+              ),
+            ),
+            DefaultTextField(
+                hint_txt: "Enter Notes",
+                label_txt: "Notes",
+                keyboard_type: TextInputType.text,
+                txtController: notesTxtController,
+                textInputAction: TextInputAction.next),
+            const SizedBox(
+              height: 20,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => qrCodeScanner(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange.shade900,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    label: const Text("Add More"),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _saveItem(); // Call the save item method
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange.shade900,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.save,
+                      color: Colors.white,
+                    ),
+                    label: const Text("Save"),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await fetchAndWhatsappPdf();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange.shade900,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.print,
+                      color: Colors.white,
+                    ),
+                    label: const Text("Save & Send to Whatsapp"),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await fetchAndSharePdf();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange.shade900,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.print,
+                      color: Colors.white,
+                    ),
+                    label: const Text("Save & Share"),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

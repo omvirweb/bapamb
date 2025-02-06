@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:jewelbook_calculator/services/dataModel.dart';
 import 'package:jewelbook_calculator/services/urlApi.dart';
 import 'package:jewelbook_calculator/ui/dashboard/dashboard.dart';
@@ -70,6 +71,14 @@ class _LoginScreenState extends State<LoginScreen> {
           // Save token in SharedPreferences
           prefs.setString('auth_token', token);
           prefs.setBool('isLoggedIn', true);
+          Get.snackbar(
+            "Success",
+            "Login successfully!",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -108,6 +117,14 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else {
         print('Request failed with status: ${response.statusCode}');
+        Get.snackbar(
+          "Error",
+          "Please try again.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
         return null;
       }
     } catch (e) {

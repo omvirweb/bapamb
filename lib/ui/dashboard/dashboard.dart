@@ -113,7 +113,30 @@ class _DashboardState extends State<Dashboard> {
             MaterialPageRoute(builder: (context) => qrCodeScanner()),
           );
         },
-        child: const Text('Scan QR Code'),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          elevation: 5,
+          shadowColor: Colors.black26,
+          backgroundColor: Colors.deepOrange[900],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.qr_code_scanner, color: Colors.white),
+            SizedBox(width: 10),
+            Text(
+              'Scan QR Code',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -167,14 +190,14 @@ class _DashboardState extends State<Dashboard> {
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: Text('Logout'),
-                      content: Text('Are you sure you want to logout?'),
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
                       actions: [
                         TextButton(
                           onPressed: () {
                             logout(context);
                           },
-                          child: Text(
+                          child: const Text(
                             'Yes',
                             style: TextStyle(
                               color: Colors.red,
@@ -185,7 +208,7 @@ class _DashboardState extends State<Dashboard> {
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-                          child: Text(
+                          child: const Text(
                             'No',
                             style: TextStyle(
                               color: Colors.green,
