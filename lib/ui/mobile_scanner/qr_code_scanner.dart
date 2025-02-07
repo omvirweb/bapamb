@@ -28,67 +28,67 @@ class _qrCodeScannerState extends State<qrCodeScanner> {
     }
   }
 
-  Future<void> fetchAndNavigate(String qrCodeValue) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? sessionToken = prefs.getString('auth_token');
+  // Future<void> fetchAndNavigate(String qrCodeValue) async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String? sessionToken = prefs.getString('auth_token');
 
-    try {
-      var response = await http.get(
-        Uri.parse(
-            'http://20.244.92.124/bapaapi/public/api/item-stock-rfid/$qrCodeValue?party_id=4214'),
-        headers: {
-          'Authorization': 'Bearer $sessionToken',
-        },
-      );
+  //   try {
+  //     var response = await http.get(
+  //       Uri.parse(
+  //           'http://20.244.92.124/bapaapi/public/api/item-stock-rfid/$qrCodeValue?party_id=4214'),
+  //       headers: {
+  //         'Authorization': 'Bearer $sessionToken',
+  //       },
+  //     );
 
-      if (response.statusCode == 200) {
-        Map<String, dynamic> responseBody = json.decode(response.body);
-        print(responseBody);
+  //     if (response.statusCode == 200) {
+  //       Map<String, dynamic> responseBody = json.decode(response.body);
+  //       print(responseBody);
 
-        if (responseBody['status'] == true) {
-          Map<String, dynamic> data = responseBody['data'];
-          print(data);
+  //       if (responseBody['status'] == true) {
+  //         Map<String, dynamic> data = responseBody['data'];
+  //         print(data);
 
-          Get.snackbar(
-            "Success",
-            "Scanned successfully!",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: const Duration(seconds: 3),
-          );
+  //         Get.snackbar(
+  //           "Success",
+  //           "Scanned successfully!",
+  //           snackPosition: SnackPosition.BOTTOM,
+  //           backgroundColor: Colors.green,
+  //           colorText: Colors.white,
+  //           duration: const Duration(seconds: 3),
+  //         );
 
-          // ✅ First Pause & Stop the Camera
-          await controller?.pauseCamera();
+  //         // ✅ First Pause & Stop the Camera
+  //         await controller?.pauseCamera();
 
-          // ✅ Navigate to next screen
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => IssueItemScreen(data: data),
-            ),
-          );
+  //         // ✅ Navigate to next screen
+  //         await Navigator.push(
+  //           context,
+  //           MaterialPageRoute(
+  //             builder: (context) => IssueItemScreen(data: data),
+  //           ),
+  //         );
 
-          // ✅ Resume camera ONLY if user comes back
-          await controller?.resumeCamera();
-        } else {
-          _showError('Error: ${responseBody['message']}');
-        }
-      } else {
-        _showError('Failed to fetch data: ${response.statusCode}');
-      }
-    } catch (e) {
-      _showError('An error occurred: $e');
-    } finally {
-      setState(() => isProcessing = false);
-    }
-  }
+  //         // ✅ Resume camera ONLY if user comes back
+  //         await controller?.resumeCamera();
+  //       } else {
+  //         _showError('Error: ${responseBody['message']}');
+  //       }
+  //     } else {
+  //       _showError('Failed to fetch data: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     _showError('An error occurred: $e');
+  //   } finally {
+  //     setState(() => isProcessing = false);
+  //   }
+  // }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
+  // void _showError(String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(content: Text(message)),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -144,8 +144,20 @@ class _qrCodeScannerState extends State<qrCodeScanner> {
       final qrCodeValue = scanData.code ?? '';
       print("Scanned QR Code: $qrCodeValue");
 
-      // ✅ Scan complete -> Fetch API & navigate
-      await fetchAndNavigate(qrCodeValue);
+      // ✅ Stop the camera before navigating
+      await controller.pauseCamera();
+
+      // ✅ Navigate to the next screen
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => IssueItemScreen(qrCode: qrCodeValue),
+        ),
+      );
+
+      // ✅ Resume the camera when returning
+      setState(() => isProcessing = false);
+      await controller.resumeCamera();
     });
   }
 

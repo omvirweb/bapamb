@@ -15,8 +15,8 @@ import '../../widget/DefaultTextField.dart';
 import 'package:http/http.dart' as http;
 
 class IssueItemScreen extends StatefulWidget {
-  final Map<String, dynamic> data;
-  const IssueItemScreen({Key? key, required this.data}) : super(key: key);
+  final String qrCode;
+  const IssueItemScreen({Key? key, required this.qrCode}) : super(key: key);
   @override
   _IssueItemScreenState createState() => _IssueItemScreenState();
 }
@@ -26,15 +26,17 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
   bool isEdit = true;
   static const platform =
       MethodChannel('com.example.jewelbook_bapa/android_id');
-  late String weight;
-  late String less;
-  late String touch;
-  late String wastage;
+  String? weight;
+  String? less;
+  String? touch;
+  String? wastage;
   List<String> partySuggestions = [];
   List<String> allPartyNames = [];
+  List<Map<String, dynamic>> allPartyData = [];
   List<Map<String, dynamic>> itemList = []; // To hold the fetched items
   String? selectedItemId;
-
+  bool isProcessing = false;
+  String? selectedPartyId;
   bool isLoading = false;
 
   final TextEditingController weightTxtController = TextEditingController();
@@ -56,14 +58,11 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
   void initState() {
     super.initState();
     // Set initial values
-    weight = widget.data["rfid_grwt"].toString();
-    less = widget.data["rfid_less"].toString();
-    touch = widget.data["rfid_tunch"].toString();
-    wastage = widget.data["wastage"].toString();
-    weightTxtController.text = weight;
-    lessTxtController.text = less;
-    touchTxtController.text = touch;
-    wastageTxtController.text = wastage;
+
+    weightTxtController.text = weight ?? '';
+    lessTxtController.text = less ?? '';
+    touchTxtController.text = touch ?? '';
+    wastageTxtController.text = wastage ?? '';
     dateTxtController.text = _getCurrentDate(); // Default date value
 
     // Calculate initial net weight and fine
@@ -71,6 +70,94 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     _updateFine();
     fetchAllPartyNames();
     fetchItemList();
+  }
+
+  Future<void> fetchAndNavigate() async {
+    if (selectedPartyId == null) {
+      _showError('Please select a party name.');
+      return;
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? sessionToken = prefs.getString('auth_token');
+
+    setState(() {
+      isProcessing = true; // Show loading indicator
+    });
+
+    try {
+      var response = await http.get(
+        Uri.parse(
+            'http://20.244.92.124/bapaapi/public/api/item-stock-rfid/${widget.qrCode}?party_id=$selectedPartyId'),
+        headers: {
+          'Authorization': 'Bearer $sessionToken',
+        },
+      );
+      print(response);
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseBody = json.decode(response.body);
+        print(responseBody);
+
+        if (responseBody['status'] == true) {
+          Map<String, dynamic> data = responseBody['data'];
+          print(data);
+
+          // Update your form fields with the new data
+          // For example, if the response contains weight, less, touch, wastage, etc.
+          weightTxtController.text = data['rfid_grwt'].toString();
+          lessTxtController.text = data['rfid_less'].toString();
+          touchTxtController.text = data['rfid_tunch'].toString();
+          wastageTxtController.text = data['wastage'].toString();
+
+          String itemStockId = data['item_stock_id'].toString();
+
+          // Check if the itemStockId exists in itemList
+          if (itemList.any((item) => item['id'].toString() == itemStockId)) {
+            setState(() {
+              selectedItemId = itemStockId; // Set the selected item ID
+              itemNameController.text = itemList.firstWhere(
+                  (item) => item['id'].toString() == itemStockId)['item_name'];
+            });
+          } else {
+            // Handle the case where the itemStockId does not exist
+            print('Item with ID $itemStockId not found in itemList.');
+            setState(() {
+              selectedItemId = null; // Reset the selected item ID
+              itemNameController.clear(); // Clear the item name
+            });
+          }
+
+          // Recalculate net weight and fine
+          _updateNetWeight();
+          _updateFine();
+
+          Get.snackbar(
+            "Success",
+            "Party data Fetched successfully!",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+        } else {
+          _showError('Error: ${responseBody['message']}');
+        }
+      } else {
+        _showError('Failed to fetch data: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showError('An error occurred: $e');
+    } finally {
+      setState(() {
+        isProcessing = false; // Hide loading indicator
+      });
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> fetchItemList() async {
@@ -103,12 +190,6 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
   Future<void> fetchAllPartyNames() async {
     setState(() {
       isLoading = true;
@@ -126,7 +207,7 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'Authorization': 'Bearer $token', // Replace with your token
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -135,13 +216,15 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
       print(data);
       if (data['status'] == 1) {
         setState(() {
+          allPartyData = List<Map<String, dynamic>>.from(
+            data['records']['data'],
+          );
           allPartyNames = List<String>.from(
-            data['records']['data'].map((party) => party['account_name']),
+            allPartyData.map((party) => party['account_name'] as String),
           );
         });
       }
     } else {
-      // Handle error
       setState(() {
         allPartyNames = [];
       });
@@ -161,9 +244,13 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     }
 
     setState(() {
-      partySuggestions = allPartyNames
-          .where((party) => party.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      partySuggestions = List<String>.from(
+        allPartyData
+            .where((party) => party['account_name']
+                .toLowerCase()
+                .contains(query.toLowerCase()))
+            .map((party) => party['account_name'] as String),
+      );
     });
   }
 
@@ -309,10 +396,10 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
     final String url = 'http://20.244.92.124/bapaapi/public/api/sell_item';
 
     final Map<String, dynamic> requestBody = {
-      'item_id': selectedItemId,
+      'item_id': selectedItemId.toString(),
       'item_name': itemNameController.text,
       'party_id':
-          partyNameController.text, // Assuming you have a way to get party_id
+          selectedPartyId.toString(), // Assuming you have a way to get party_id
       'party_name': partyNameController.text,
       'date': dateTxtController.text,
       'note': notesTxtController.text,
@@ -333,10 +420,12 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
         },
         body: json.encode(requestBody),
       );
+      print(requestBody);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = json.decode(response.body);
         if (responseBody['status'] == 1) {
+          print(responseBody);
           Get.snackbar(
             "Success",
             "Item Save successfully!",
@@ -466,9 +555,16 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
                       onTap: () {
                         setState(() {
                           partyNameController.text = partySuggestions[index];
-                          partySuggestions
-                              .clear(); // Suggestions ko clear karna
+                          selectedPartyId = allPartyData
+                              .firstWhere((party) =>
+                                  party['account_name'] ==
+                                  partySuggestions[index])['account_id']
+                              .toString(); // Store the selected party ID
+                          partySuggestions.clear(); // Clear suggestions
                         });
+
+                        // Call fetchAndNavigate to refresh data
+                        fetchAndNavigate();
                       },
                     );
                   },
@@ -691,11 +787,10 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
   // Method to get the current date in DD-MM-YYYY format
   String _getCurrentDate() {
     DateTime now = DateTime.now();
-    return DateFormat('dd-MM-yyyy')
-        .format(now); // Format the date as DD-MM-YYYY
+    return DateFormat('yyyy-MM-dd').format(now); // Correct SQL date format
   }
 
-  // Method to select a date and display it in DD-MM-YYYY format
+  // Method to select a date and display it in SQL format (YYYY-MM-DD)
   Future<void> _selectDate(BuildContext context) async {
     DateTime now = DateTime.now();
     DateTime? selectedDate = await showDatePicker(
@@ -705,7 +800,10 @@ class _IssueItemScreenState extends State<IssueItemScreen> {
       lastDate: DateTime(2101),
     );
     if (selectedDate != null) {
-      dateTxtController.text = DateFormat('dd-MM-yyyy').format(selectedDate);
+      setState(() {
+        dateTxtController.text = DateFormat('yyyy-MM-dd')
+            .format(selectedDate); // Correct SQL date format
+      });
     }
   }
 }
